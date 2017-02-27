@@ -481,7 +481,6 @@ Infiniband::MemoryManager::Chunk::Chunk(ibv_mr* m, uint32_t len, char* b)
 
 Infiniband::MemoryManager::Chunk::~Chunk()
 {
-  assert(ibv_dereg_mr(mr) == 0);
 }
 
 void Infiniband::MemoryManager::Chunk::set_offset(uint32_t o)
@@ -567,12 +566,9 @@ Infiniband::MemoryManager::Cluster::Cluster(MemoryManager& m, uint32_t s)
 
 Infiniband::MemoryManager::Cluster::~Cluster()
 {
-  char *p = chunk_base;
-  for (uint32_t i = 0; i < num_chunk; i++){
-    Chunk *chunk = reinterpret_cast<Chunk*>(p);
-    chunk->~Chunk();
-    p += sizeof(Chunk);
-  }
+  Chunk *chunk = reinterpret_cast<Chunk*>(chunk_base);
+  int r = ibv_dereg_mr(chunk->mr);
+  assert(r == 0);
 
   ::free(chunk_base);
   if (manager.enabled_huge_page)
@@ -596,11 +592,11 @@ int Infiniband::MemoryManager::Cluster::fill(uint32_t num)
   chunk_base = (char*)::malloc(sizeof(Chunk) * num);
   memset(chunk_base, 0, sizeof(Chunk) * num);
   free_chunks.reserve(num);
+  ibv_mr* m = ibv_reg_mr(manager.pd->pd, base, bytes, IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_LOCAL_WRITE);
+  assert(m);
   char *ptr = chunk_base;
   for (uint32_t offset = 0; offset < bytes; offset += buffer_size){
     Chunk *chunk = reinterpret_cast<Chunk*>(ptr);
-    ibv_mr* m = ibv_reg_mr(manager.pd->pd, base+offset, buffer_size, IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_LOCAL_WRITE);
-    assert(m);
     new(chunk) Chunk(m, buffer_size, base+offset);
     free_chunks.push_back(chunk);
     ptr += sizeof(Chunk);
