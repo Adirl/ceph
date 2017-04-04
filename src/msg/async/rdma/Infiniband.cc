@@ -709,6 +709,11 @@ unsigned Infiniband::MemoryManager::return_tx(std::vector<Chunk*> &chunks)
   return send->take_back(chunks);
 }
 
+unsigned Infiniband::MemoryManager::return_rx(std::vector<Chunk*> &chunks)
+{
+  return channel->take_back(chunks);
+}
+
 int Infiniband::MemoryManager::get_send_buffers(std::vector<Chunk*> &c, size_t bytes)
 {
   return send->get_buffers(c, bytes);
@@ -759,6 +764,7 @@ Infiniband::Infiniband(CephContext *cct, const std::string &device_name, uint8_t
 
 Infiniband::~Infiniband()
 {
+  memory_manager->return_rx(m_rx_chunks);
   assert(ibv_destroy_srq(srq) == 0);
   delete memory_manager;
   delete pd;
@@ -833,10 +839,9 @@ int Infiniband::post_chunk(Chunk* chunk)
 
 int Infiniband::post_channel_cluster()
 {
-  vector<Chunk*> free_chunks;
-  int r = memory_manager->get_channel_buffers(free_chunks, 0);
+  int r = memory_manager->get_channel_buffers(m_rx_chunks, 0);
   assert(r > 0);
-  for (vector<Chunk*>::iterator iter = free_chunks.begin(); iter != free_chunks.end(); ++iter) {
+  for (auto iter = m_rx_chunks.begin(); iter != m_rx_chunks.end(); ++iter) {
     r = post_chunk(*iter);
     assert(r == 0);
   }
