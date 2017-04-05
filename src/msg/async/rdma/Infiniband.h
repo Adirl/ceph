@@ -230,7 +230,7 @@ class Infiniband {
   Device *device;
   ProtectionDomain *pd;
   DeviceList device_list;
-  vector<Chunk*> m_rx_chunks;
+  vector<MemoryManager::Chunk*> m_rx_chunks;
   void wire_gid_to_gid(const char *wgid, union ibv_gid *gid);
   void gid_to_wire_gid(const union ibv_gid *gid, char wgid[]);
 
