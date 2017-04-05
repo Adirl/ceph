@@ -379,7 +379,7 @@ void RDMADispatcher::handle_tx_event(ibv_wc *cqe, int n)
     }
 
     // FIXME: why not tx?
-    if (global_infiniband->get_memory_manager()->is_tx_buffer(chunk->buffer))
+    if (global_infiniband->get_memory_manager()->is_tx_buffer(chunk->buffer)) {
       tx_chunks.push_back(chunk);
     } else {
       ldout(cct, 1) << __func__ << " not tx buffer, chunk " << chunk << dendl;
