@@ -608,7 +608,7 @@ void RDMAConnectedSocketImpl::close()
 void RDMAConnectedSocketImpl::alloc_shared_registered_memory(bufferlist &bl, unsigned len)
 {
   unsigned got = 0;
-  if (ibdev->get_memory_manager()->num_tx_buffer() >= cct->_conf->ms_async_rdma_send_need_copy_free_num) {
+  if (infiniband->get_memory_manager()->num_tx_buffer() >= cct->_conf->ms_async_rdma_send_need_copy_free_num) {
     assert(worker->center.in_thread());
     std::vector<Chunk*> buffers;
     int r = infiniband->get_tx_buffers(buffers, len);
