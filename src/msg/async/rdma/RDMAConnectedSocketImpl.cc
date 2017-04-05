@@ -609,10 +609,10 @@ void RDMAConnectedSocketImpl::alloc_shared_registered_memory(bufferlist &bl, uns
 {
   assert(worker->center.in_thread());
   std::vector<Chunk*> buffers;
-  int r = ibdev->get_tx_buffers(buffers, len);
+  int r = global_infiniband->get_tx_buffers(buffers, len);
   assert(r >= 0);
   dispatcher->inflight += r;
-  unsigned got = ibdev->get_memory_manager()->get_tx_buffer_size() * r;
+  unsigned got = global_infiniband->get_memory_manager()->get_tx_buffer_size() * r;
   ldout(cct, 30) << __func__ << " need " << len << " bytes, reserve " << got
                  << " registered  bytes, inflight " << dispatcher->inflight << dendl;
   // must keep the reference to the device, since bufferptr may be destruct
