@@ -617,17 +617,17 @@ void RDMAConnectedSocketImpl::alloc_shared_registered_memory(bufferlist &bl, uns
                  << " registered  bytes, inflight " << dispatcher->inflight << dendl;
   // must keep the reference to the device, since bufferptr may be destruct
   // after connection down
-  Device *dev = ibdev;
-  RDMADispatcher *dpt = dispatcher;
   for (auto c : buffers) {
-    auto del = std::bind([dpt, c, dev] {
-                         std::vector<Chunk*> buffers;
-                         buffers.push_back(c);
-                         dpt->post_tx_buffer(dev, buffers); });
+    c->shared = 1;
     bl.push_back(buffer::claim_buffer(
-            c->bytes, c->buffer,
-            make_deleter(std::move(del))));
+	c->bytes, c->buffer,
+	make_deleter([this, c] {
+      std::vector<Chunk*> buffers;
+      buffers.push_back(c);
+      post_tx_buffer(buffers);
+    })));
   }
+
 
   if (got < len) {
     dispatcher->perf_logger->inc(l_msgr_rdma_tx_no_registered_mem);
