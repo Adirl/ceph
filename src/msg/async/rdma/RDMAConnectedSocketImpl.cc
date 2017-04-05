@@ -624,7 +624,7 @@ void RDMAConnectedSocketImpl::alloc_shared_registered_memory(bufferlist &bl, uns
 	make_deleter([this, c] {
       std::vector<Chunk*> buffers;
       buffers.push_back(c);
-      post_tx_buffer(buffers);
+      dispatcher->post_tx_buffer(buffers);
     })));
   }
 
