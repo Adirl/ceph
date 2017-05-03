@@ -53,7 +53,8 @@ RDMADispatcher::~RDMADispatcher()
 
 RDMADispatcher::RDMADispatcher(CephContext* c, RDMAStack* s)
   : cct(c), async_handler(new C_handle_cq_async(this)), lock("RDMADispatcher::lock"),
-  w_lock("RDMADispatcher::for worker pending list"), stack(s)
+  w_lock("RDMADispatcher::for worker pending list"), stack(s),
+  m_rx_bufs_in_use(0)
 {
   PerfCountersBuilder plb(cct, "AsyncMessenger::RDMADispatcher", l_msgr_rdma_dispatcher_first, l_msgr_rdma_dispatcher_last);
 
@@ -183,6 +184,10 @@ void RDMADispatcher::polling()
             ldout(cct, 1) << __func__ << " csi with qpn " << response->qp_num << " may be dead. chunk " << chunk << " will be back ? " << r << dendl;
             assert(r == 0);
           } else {
+	    rx_buf_use(1);
+	    if (m_rx_bufs_in_use >= (int)cct->_conf->ms_async_rdma_receive_buffers) {
+		lderr(cct) << __func__ << " ALL RX BUFFERS ARE IN USE: " << m_rx_bufs_in_use << " >= " << cct->_conf->ms_async_rdma_receive_buffers << dendl;
+	    }
             polled[conn].push_back(*response);
           }
         } else {

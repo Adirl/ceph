@@ -56,11 +56,13 @@ RDMAConnectedSocketImpl::~RDMAConnectedSocketImpl()
     ret = infiniband->post_chunk(reinterpret_cast<Chunk*>(wc[i].wr_id));
     assert(ret == 0);
     dispatcher->perf_logger->dec(l_msgr_rdma_inqueue_rx_chunks);
+    dispatcher->rx_buf_release(1);
   }
   for (unsigned i=0; i < buffers.size(); ++i) {
     ret = infiniband->post_chunk(buffers[i]);
     assert(ret == 0);
     dispatcher->perf_logger->dec(l_msgr_rdma_inqueue_rx_chunks);
+    dispatcher->rx_buf_release(1);
   }
 }
 
@@ -283,6 +285,7 @@ ssize_t RDMAConnectedSocketImpl::read(char* buf, size_t len)
       }
       assert(infiniband->post_chunk(chunk) == 0);
       dispatcher->perf_logger->dec(l_msgr_rdma_inqueue_rx_chunks);
+      dispatcher->rx_buf_release(1);
     } else {
       if (read == (ssize_t)len) {
         buffers.push_back(chunk);
@@ -295,6 +298,7 @@ ssize_t RDMAConnectedSocketImpl::read(char* buf, size_t len)
         read += chunk->read(buf+read, response->byte_len);
         assert(infiniband->post_chunk(chunk) == 0);
         dispatcher->perf_logger->dec(l_msgr_rdma_inqueue_rx_chunks);
+	dispatcher->rx_buf_release(1);
       }
     }
   }
@@ -323,6 +327,7 @@ ssize_t RDMAConnectedSocketImpl::read_buffers(char* buf, size_t len)
     if ((*c)->over()) {
       assert(infiniband->post_chunk(*c) == 0);
       dispatcher->perf_logger->dec(l_msgr_rdma_inqueue_rx_chunks);
+      dispatcher->rx_buf_release(1);
       ldout(cct, 25) << __func__ << " one chunk over." << dendl;
     }
     if (read == len) {
