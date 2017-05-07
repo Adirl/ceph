@@ -605,7 +605,6 @@ void RDMAConnectedSocketImpl::notify()
   uint64_t i = 1;
   int n;
 
-  ldout(cct, 0) << __func__ << " notify_fd " << notify_fd << dendl;
   n = write(notify_fd, &i, sizeof(i));
   if (n < 0) {
    lderr(cct) << "NOTIFY FAILED ON FD: " << notify_fd << " errno: " << cpp_strerror(errno) << dendl; 
