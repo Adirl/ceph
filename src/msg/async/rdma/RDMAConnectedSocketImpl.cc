@@ -265,6 +265,9 @@ ssize_t RDMAConnectedSocketImpl::read(char* buf, size_t len)
   std::vector<ibv_wc> cqe;
   get_wc(cqe);
   if (cqe.empty()) {
+    if (!buffers.empty()) {
+      notify();
+    }
     if (read > 0) {
       return read;
     }
@@ -314,6 +317,10 @@ ssize_t RDMAConnectedSocketImpl::read(char* buf, size_t len)
     connected = 1; //if so, we don't need the last handshake
     cleanup();
     submit(false);
+  }
+
+  if (!buffers.empty()) {
+    notify();
   }
 
   if (read == 0 && error)
