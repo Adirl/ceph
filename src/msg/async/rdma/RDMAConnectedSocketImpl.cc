@@ -201,7 +201,7 @@ int RDMAConnectedSocketImpl::try_connect(const entity_addr_t& peer_addr, const S
 }
 
 void RDMAConnectedSocketImpl::handle_connection() {
-  ldout(cct, 20) << __func__ << " QP: " << my_msg.qpn << " tcp_fd: " << tcp_fd << " fd: " << notify_fd << dendl;
+  ldout(cct, 20) << __func__ << " QP: " << my_msg.qpn << " tcp_fd: " << tcp_fd << " notify_fd: " << notify_fd << dendl;
   int r = infiniband->recv_msg(cct, tcp_fd, peer_msg);
   if (r < 0) {
     if (r != -EAGAIN) {
@@ -256,16 +256,25 @@ ssize_t RDMAConnectedSocketImpl::read(char* buf, size_t len)
   uint64_t i = 0;
   int r = ::read(notify_fd, &i, sizeof(i));
   ldout(cct, 20) << __func__ << " notify_fd : " << i << " in " << my_msg.qpn << " r = " << r << dendl;
-  if (error)
-    return -error;
+  //if (error)
+  //  return -error;
   ssize_t read = 0;
   if (!buffers.empty())
     read = read_buffers(buf,len);
 
   std::vector<ibv_wc> cqe;
   get_wc(cqe);
-  if (cqe.empty())
-    return read == 0 ? -EAGAIN : read;
+  if (cqe.empty()) {
+    if (read > 0) {
+      return read;
+    }
+    if (error) {
+      return -error;
+    } else {
+      return -EAGAIN;
+    }
+    //return read == 0 ? -EAGAIN : read;
+  }
 
   ldout(cct, 20) << __func__ << " poll queue got " << cqe.size() << " responses. QP: " << my_msg.qpn << dendl;
   for (size_t i = 0; i < cqe.size(); ++i) {
@@ -589,6 +598,7 @@ void RDMAConnectedSocketImpl::notify()
   uint64_t i = 1;
   int n;
 
+  ldout(cct, 0) << __func__ << " notify_fd " << notify_fd << dendl;
   n = write(notify_fd, &i, sizeof(i));
   if (n < 0) {
    lderr(cct) << "NOTIFY FAILED ON FD: " << notify_fd << " errno: " << cpp_strerror(errno) << dendl; 
