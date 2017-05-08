@@ -22,6 +22,7 @@
 #include "common/deleter.h"
 #include "common/Tub.h"
 #include "RDMAStack.h"
+#include "Infiniband.h"
 
 #define dout_subsys ceph_subsys_ms
 #undef dout_prefix
@@ -177,6 +178,12 @@ void RDMADispatcher::polling()
 	    if (m_rx_bufs_in_use >= (int)cct->_conf->ms_async_rdma_receive_buffers) {
 		lderr(cct) << __func__ << " ALL RX BUFFERS ARE IN USE: " << m_rx_bufs_in_use << " >= " << cct->_conf->ms_async_rdma_receive_buffers << dendl;
 	    }
+	    uint32_t recv_buffers = (uint32_t)cct->_conf->ms_async_rdma_receive_buffers;
+	    if (m_rx_bufs_in_use >= 0.8 * recv_buffers) {
+	      Infiniband::Cluster* rx_pool = global_infiniband->get_memory_manager()->get_rx_pool();
+              rx_pool->fill((int)cct->_conf->ms_async_rdma_receive_buffers);
+              global_infiniband->post_channel_cluster();
+            }
             polled[conn].push_back(*response);
           }
         } else {
