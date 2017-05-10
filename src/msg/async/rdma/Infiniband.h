@@ -204,7 +204,7 @@ class Infiniband {
     uint32_t get_tx_buffer_size() const {
       return send->buffer_size;
     }
-    Cluster* get_rx_pool(){ return recv; }
+    Cluster* get_rx_pool(){ return recv.front(); }
     bool enabled_huge_page;
 
    private:
