@@ -197,7 +197,7 @@ class Infiniband {
     int get_send_buffers(std::vector<Chunk*> &c, size_t bytes);
     int get_recv_buffers(std::vector<Chunk*> &chunks, size_t bytes);
     bool is_tx_buffer(const char* c) { return send->is_my_buffer(c); }
-    bool is_rx_buffer(const char* c) { return recv->is_my_buffer(c); }
+    bool is_rx_buffer(const char*);
     Chunk *get_tx_chunk_by_buffer(const char *c) {
       return send->get_chunk_by_buffer(c);
     }
@@ -208,7 +208,7 @@ class Infiniband {
     bool enabled_huge_page;
 
    private:
-    Cluster* recv;//RECV
+    std::vector <Cluster*> recv;//RECV
     Cluster* send;// SEND
     Device *device;
     ProtectionDomain *pd;

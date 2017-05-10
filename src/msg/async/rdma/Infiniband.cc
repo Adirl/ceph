@@ -688,7 +688,7 @@ void Infiniband::MemoryManager::register_rx_tx(uint32_t size, uint32_t rx_num, u
 {
   assert(device);
   assert(pd);
-  recv = new Cluster(*this, size);
+  recv.push_back (new Cluster(*this, size));
   recv->fill(rx_num);
 
   send = new Cluster(*this, size);
@@ -708,6 +708,15 @@ int Infiniband::MemoryManager::get_send_buffers(std::vector<Chunk*> &c, size_t b
 int Infiniband::MemoryManager::get_recv_buffers(std::vector<Chunk*> &chunks, size_t bytes)
 {
   return recv->get_buffers(chunks, bytes);
+}
+
+bool Infiniband::MemoryManager::is_rx_buffer(const char* c) {
+  std::vector<Cluster*>::const_iterator i;
+  for(i = recv->begin(); i != recv->end(); ++i) {
+    if (i->is_my_buffer(c)) {
+      return true;
+    }
+  }
 }
 
 
