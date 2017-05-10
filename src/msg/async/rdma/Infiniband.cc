@@ -653,8 +653,8 @@ Infiniband::MemoryManager::MemoryManager(Device *d, ProtectionDomain *p, bool hu
 
 Infiniband::MemoryManager::~MemoryManager()
 {
-  if (channel)
-    delete channel;
+  if (recv)
+    delete recv;
   if (send)
     delete send;
 }
@@ -688,8 +688,8 @@ void Infiniband::MemoryManager::register_rx_tx(uint32_t size, uint32_t rx_num, u
 {
   assert(device);
   assert(pd);
-  channel = new Cluster(*this, size);
-  channel->fill(rx_num);
+  recv = new Cluster(*this, size);
+  recv->fill(rx_num);
 
   send = new Cluster(*this, size);
   send->fill(tx_num);
@@ -705,9 +705,9 @@ int Infiniband::MemoryManager::get_send_buffers(std::vector<Chunk*> &c, size_t b
   return send->get_buffers(c, bytes);
 }
 
-int Infiniband::MemoryManager::get_channel_buffers(std::vector<Chunk*> &chunks, size_t bytes)
+int Infiniband::MemoryManager::get_recv_buffers(std::vector<Chunk*> &chunks, size_t bytes)
 {
-  return channel->get_buffers(chunks, bytes);
+  return recv->get_buffers(chunks, bytes);
 }
 
 
@@ -745,7 +745,7 @@ Infiniband::Infiniband(CephContext *cct, const std::string &device_name, uint8_t
       cct->_conf->ms_async_rdma_buffer_size, max_recv_wr, max_send_wr);
 
   srq = create_shared_receive_queue(max_recv_wr, MAX_SHARED_RX_SGE_COUNT);
-  post_channel_cluster();
+  post_recv_cluster();
 }
 
 Infiniband::~Infiniband()
@@ -822,7 +822,7 @@ int Infiniband::post_chunk(Chunk* chunk)
   return 0;
 }
 
-int Infiniband::post_channel_cluster()
+int Infiniband::post_recv_cluster()
 {
   vector<Chunk*> free_chunks;
   int r = memory_manager->get_channel_buffers(free_chunks, 0);

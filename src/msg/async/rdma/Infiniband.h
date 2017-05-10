@@ -195,20 +195,20 @@ class Infiniband {
     void register_rx_tx(uint32_t size, uint32_t rx_num, uint32_t tx_num);
     void return_tx(std::vector<Chunk*> &chunks);
     int get_send_buffers(std::vector<Chunk*> &c, size_t bytes);
-    int get_channel_buffers(std::vector<Chunk*> &chunks, size_t bytes);
+    int get_recv_buffers(std::vector<Chunk*> &chunks, size_t bytes);
     bool is_tx_buffer(const char* c) { return send->is_my_buffer(c); }
-    bool is_rx_buffer(const char* c) { return channel->is_my_buffer(c); }
+    bool is_rx_buffer(const char* c) { return recv->is_my_buffer(c); }
     Chunk *get_tx_chunk_by_buffer(const char *c) {
       return send->get_chunk_by_buffer(c);
     }
     uint32_t get_tx_buffer_size() const {
       return send->buffer_size;
     }
-    Cluster* get_rx_pool(){ return channel; }
+    Cluster* get_rx_pool(){ return recv; }
     bool enabled_huge_page;
 
    private:
-    Cluster* channel;//RECV
+    Cluster* recv;//RECV
     Cluster* send;// SEND
     Device *device;
     ProtectionDomain *pd;
