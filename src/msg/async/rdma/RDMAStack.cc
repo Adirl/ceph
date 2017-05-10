@@ -182,7 +182,7 @@ void RDMADispatcher::polling()
 	    if (m_rx_bufs_in_use >= 0.8 * recv_buffers) {
 	      Infiniband::Cluster* rx_pool = global_infiniband->get_memory_manager()->get_rx_pool();
               rx_pool->fill((int)cct->_conf->ms_async_rdma_receive_buffers);
-              global_infiniband->post_channel_cluster();
+              global_infiniband->post_recv_cluster();
             }
             polled[conn].push_back(*response);
           }
