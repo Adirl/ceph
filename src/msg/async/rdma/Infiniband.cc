@@ -825,7 +825,7 @@ int Infiniband::post_chunk(Chunk* chunk)
 int Infiniband::post_recv_cluster()
 {
   vector<Chunk*> free_chunks;
-  int r = memory_manager->get_channel_buffers(free_chunks, 0);
+  int r = memory_manager->get_recv_buffers(free_chunks, 0);
   assert(r > 0);
   for (vector<Chunk*>::iterator iter = free_chunks.begin(); iter != free_chunks.end(); ++iter) {
     r = post_chunk(*iter);
