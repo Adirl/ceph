@@ -557,7 +557,7 @@ void Infiniband::MemoryManager::Chunk::clear()
 
 void Infiniband::MemoryManager::Chunk::post_srq(Infiniband *ib)
 {
-  ib->post_chunk(this);
+  ib->post_chunk_to_srq(this);
 }
 
 Infiniband::MemoryManager::Cluster::Cluster(MemoryManager& m, uint32_t s)
@@ -810,7 +810,7 @@ Infiniband::QueuePair* Infiniband::create_queue_pair(CephContext *cct, Completio
   return qp;
 }
 
-int Infiniband::post_chunk(Chunk* chunk)
+int Infiniband::post_chunk_to_srq(Chunk* chunk)
 {
   ibv_sge isge;
   isge.addr = reinterpret_cast<uint64_t>(chunk->buffer);
@@ -837,7 +837,7 @@ int Infiniband::post_recv_cluster()
   int r = memory_manager->get_recv_buffers(free_chunks, 0);
   assert(r > 0);
   for (vector<Chunk*>::iterator iter = free_chunks.begin(); iter != free_chunks.end(); ++iter) {
-    r = post_chunk(*iter);
+    r = post_chunk_to_srq(*iter);
     assert(r == 0);
   }
   return 0;

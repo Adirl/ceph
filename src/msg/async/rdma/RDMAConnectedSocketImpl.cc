@@ -53,12 +53,12 @@ RDMAConnectedSocketImpl::~RDMAConnectedSocketImpl()
   error = ECONNRESET;
   int ret = 0;
   for (unsigned i=0; i < wc.size(); ++i) {
-    ret = infiniband->post_chunk(reinterpret_cast<Chunk*>(wc[i].wr_id));
+    ret = infiniband->post_chunk_to_srq(reinterpret_cast<Chunk*>(wc[i].wr_id));
     assert(ret == 0);
     dispatcher->rx_buf_release(1);
   }
   for (unsigned i=0; i < buffers.size(); ++i) {
-    ret = infiniband->post_chunk(buffers[i]);
+    ret = infiniband->post_chunk_to_srq(buffers[i]);
     assert(ret == 0);
     dispatcher->rx_buf_release(1);
   }
@@ -290,7 +290,7 @@ ssize_t RDMAConnectedSocketImpl::read(char* buf, size_t len)
         error = ECONNRESET;
         ldout(cct, 20) << __func__ << " got remote close msg..." << dendl;
       }
-      assert(infiniband->post_chunk(chunk) == 0);
+      assert(infiniband->post_chunk_to_srq(chunk) == 0);
       dispatcher->rx_buf_release(1);
     } else {
       if (read == (ssize_t)len) {
@@ -302,7 +302,7 @@ ssize_t RDMAConnectedSocketImpl::read(char* buf, size_t len)
         ldout(cct, 25) << __func__ << " buffers add a chunk: " << chunk->get_offset() << ":" << chunk->get_bound() << dendl;
       } else {
         read += chunk->read(buf+read, response->byte_len);
-        assert(infiniband->post_chunk(chunk) == 0);
+        assert(infiniband->post_chunk_to_srq(chunk) == 0);
 	dispatcher->rx_buf_release(1);
       }
     }
@@ -334,7 +334,7 @@ ssize_t RDMAConnectedSocketImpl::read_buffers(char* buf, size_t len)
     read += tmp;
     ldout(cct, 25) << __func__ << " this iter read: " << tmp << " bytes." << " offset: " << (*c)->get_offset() << " ,bound: " << (*c)->get_bound()  << ". Chunk:" << *c  << dendl;
     if ((*c)->over()) {
-      assert(infiniband->post_chunk(*c) == 0);
+      assert(infiniband->post_chunk_to_srq(*c) == 0);
       dispatcher->rx_buf_release(1);
       ldout(cct, 25) << __func__ << " one chunk over." << dendl;
     }

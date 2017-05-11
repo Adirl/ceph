@@ -350,7 +350,7 @@ class Infiniband {
   typedef MemoryManager::Chunk Chunk;
   QueuePair* create_queue_pair(CephContext *c, CompletionQueue*, CompletionQueue*, ibv_qp_type type);
   ibv_srq* create_shared_receive_queue(uint32_t max_wr, uint32_t max_sge);
-  int post_chunk(Chunk* chunk);
+  int post_chunk_to_srq(Chunk* chunk);
   int post_recv_cluster();
   int get_tx_buffers(std::vector<Chunk*> &c, size_t bytes);
   CompletionChannel *create_comp_channel(CephContext *c);

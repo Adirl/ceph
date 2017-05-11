@@ -170,7 +170,7 @@ void RDMADispatcher::polling()
           conn = get_conn_lockless(response->qp_num);
           if (!conn) {
             assert(global_infiniband->is_rx_buffer(chunk->buffer));
-            r = global_infiniband->post_chunk(chunk);
+            r = global_infiniband->post_chunk_to_srq(chunk);
             ldout(cct, 1) << __func__ << " csi with qpn " << response->qp_num << " may be dead. chunk " << chunk << " will be back ? " << r << dendl;
             assert(r == 0);
           } else {
@@ -192,7 +192,7 @@ void RDMADispatcher::polling()
               << ") status(" << response->status << ":"
               << global_infiniband->wc_status_to_string(response->status) << ")" << dendl;
           assert(global_infiniband->is_rx_buffer(chunk->buffer));
-          r = global_infiniband->post_chunk(chunk);
+          r = global_infiniband->post_chunk_to_srq(chunk);
           if (r) {
             ldout(cct, 0) << __func__ << " post chunk failed, error: " << cpp_strerror(r) << dendl;
             assert(r == 0);
