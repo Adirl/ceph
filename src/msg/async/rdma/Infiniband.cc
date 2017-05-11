@@ -727,6 +727,20 @@ bool Infiniband::MemoryManager::is_rx_buffer(const char* c) {
   }
 }
 
+int Infiniband::MemoryManager::resize_rx_pool(CephContext *cct) {
+
+  Cluster *rx_ext = new Cluster(this, cct->_conf->ms_async_rdma_buffer_size);
+  int ext_size = (int)cct->_conf->ms_async_rdma_receive_buffers / 2;
+  recv.push_back(c);
+  rx_ext->alloc_and_reg(ext_size);
+
+  //resize srq and post buffers
+  struct ibv_srq_attr srq_attr;
+  memset(&srq_attr, 0, sizeof(srq_attr));
+  srq_attr.max_wr = max_recv_wr + ext_size;
+  int r = ibv_modify_srq(srq, &srq_attr, IBV_SRQ_MAX_WR );
+  post_recv_cluster();
+}
 
 Infiniband::Infiniband(CephContext *cct, const std::string &device_name, uint8_t port_num): device_list(cct)
 {

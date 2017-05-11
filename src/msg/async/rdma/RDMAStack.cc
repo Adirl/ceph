@@ -174,15 +174,13 @@ void RDMADispatcher::polling()
             ldout(cct, 1) << __func__ << " csi with qpn " << response->qp_num << " may be dead. chunk " << chunk << " will be back ? " << r << dendl;
             assert(r == 0);
           } else {
-	    rx_buf_use(1);
-	    if (m_rx_bufs_in_use >= (int)cct->_conf->ms_async_rdma_receive_buffers) {
+            int recv_buffers = (int)cct->_conf->ms_async_rdma_receive_buffers;
+            rx_buf_use(1);
+	    if (m_rx_bufs_in_use >= recv_buffers) {
 		lderr(cct) << __func__ << " ALL RX BUFFERS ARE IN USE: " << m_rx_bufs_in_use << " >= " << cct->_conf->ms_async_rdma_receive_buffers << dendl;
 	    }
-	    uint32_t recv_buffers = (uint32_t)cct->_conf->ms_async_rdma_receive_buffers;
 	    if (m_rx_bufs_in_use >= 0.8 * recv_buffers) {
-	      Infiniband::Cluster* rx_pool = global_infiniband->get_memory_manager()->get_rx_pool();
-              rx_pool->fill((int)cct->_conf->ms_async_rdma_receive_buffers);
-              global_infiniband->post_recv_cluster();
+	      Infiniband::Cluster::resize_rx_pool(cct);
             }
             polled[conn].push_back(*response);
           }

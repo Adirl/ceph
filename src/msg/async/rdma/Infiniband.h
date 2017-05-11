@@ -205,6 +205,7 @@ class Infiniband {
       return send->buffer_size;
     }
     Cluster* get_rx_pool(){ return recv.front(); }
+    int resize_rx_pool(CephContext *);
     bool enabled_huge_page;
 
    private:
