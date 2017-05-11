@@ -165,7 +165,7 @@ class Infiniband {
       Cluster(MemoryManager& m, uint32_t s);
       ~Cluster();
 
-      int fill(uint32_t num);
+      int alloc_and_reg(uint32_t num);
       void take_back(std::vector<Chunk*> &ck);
       int get_buffers(std::vector<Chunk*> &chunks, size_t bytes);
       Chunk *get_chunk_by_buffer(const char *c) {

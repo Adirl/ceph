@@ -581,7 +581,7 @@ Infiniband::MemoryManager::Cluster::~Cluster()
     ::free(base);
 }
 
-int Infiniband::MemoryManager::Cluster::fill(uint32_t num)
+int Infiniband::MemoryManager::Cluster::alloc_reg(uint32_t num)
 {
   assert(!base);
   num_chunk = num;
@@ -653,8 +653,12 @@ Infiniband::MemoryManager::MemoryManager(Device *d, ProtectionDomain *p, bool hu
 
 Infiniband::MemoryManager::~MemoryManager()
 {
-  if (recv)
-    delete recv;
+  if (recv.front()) {
+    std::vector<Cluster*>::const_iterator i;
+    for(i = recv->begin(); i != recv->end(); ++i) {
+      delete i;
+    }
+  }
   if (send)
     delete send;
 }
@@ -688,11 +692,11 @@ void Infiniband::MemoryManager::register_rx_tx(uint32_t size, uint32_t rx_num, u
 {
   assert(device);
   assert(pd);
-  recv.push_back (new Cluster(*this, size));
-  recv->fill(rx_num);
+  recv.push_back(new Cluster(*this, size));
+  recv.back()->alloc_and_reg(rx_num);
 
   send = new Cluster(*this, size);
-  send->fill(tx_num);
+  send->alloc_and_reg(tx_num);
 }
 
 void Infiniband::MemoryManager::return_tx(std::vector<Chunk*> &chunks)
@@ -707,7 +711,11 @@ int Infiniband::MemoryManager::get_send_buffers(std::vector<Chunk*> &c, size_t b
 
 int Infiniband::MemoryManager::get_recv_buffers(std::vector<Chunk*> &chunks, size_t bytes)
 {
-  return recv->get_buffers(chunks, bytes);
+  std::vector<Cluster*>::const_iterator i;
+  for(i = recv->begin(); i != recv->end(); ++i) {
+    if (i->get_buffers(chunks, bytes);)
+    return
+  }
 }
 
 bool Infiniband::MemoryManager::is_rx_buffer(const char* c) {
