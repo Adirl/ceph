@@ -180,7 +180,7 @@ void RDMADispatcher::polling()
 		lderr(cct) << __func__ << " ALL RX BUFFERS ARE IN USE: " << m_rx_bufs_in_use << " >= " << cct->_conf->ms_async_rdma_receive_buffers << dendl;
 	    }
 	    if (m_rx_bufs_in_use >= 0.8 * recv_buffers) {
-	      Infiniband::Cluster::resize_rx_pool(cct);
+	      Infiniband::MemoryManager::resize_rx_pool(cct);
             }
             polled[conn].push_back(*response);
           }

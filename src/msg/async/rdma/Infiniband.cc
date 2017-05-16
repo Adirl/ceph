@@ -581,7 +581,7 @@ Infiniband::MemoryManager::Cluster::~Cluster()
     ::free(base);
 }
 
-int Infiniband::MemoryManager::Cluster::alloc_reg(uint32_t num)
+int Infiniband::MemoryManager::Cluster::alloc_and_reg(uint32_t num)
 {
   assert(!base);
   num_chunk = num;
