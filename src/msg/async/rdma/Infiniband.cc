@@ -654,9 +654,9 @@ Infiniband::MemoryManager::MemoryManager(Device *d, ProtectionDomain *p, bool hu
 Infiniband::MemoryManager::~MemoryManager()
 {
   if (recv.front()) {
-    std::vector<Cluster*>::const_iterator i;
-    for(i = recv->begin(); i != recv->end(); ++i) {
-      delete i;
+    std::vector<Cluster*>::const_iterator it;
+    for(it = recv.begin(); it != recv.end(); ++it) {
+      delete &it;
     }
   }
   if (send)
@@ -711,17 +711,17 @@ int Infiniband::MemoryManager::get_send_buffers(std::vector<Chunk*> &c, size_t b
 
 int Infiniband::MemoryManager::get_recv_buffers(std::vector<Chunk*> &chunks, size_t bytes)
 {
-  std::vector<Cluster*>::const_iterator i;
-  for(i = recv->begin(); i != recv->end(); ++i) {
-    if (i->get_buffers(chunks, bytes);)
-    return
+  std::vector<Cluster*>::const_iterator it;
+  for(it = recv.begin(); it != recv.end(); ++it) {
+    if ((*it)->get_buffers(chunks, bytes))
+      return bytes;
   }
 }
 
 bool Infiniband::MemoryManager::is_rx_buffer(const char* c) {
-  std::vector<Cluster*>::const_iterator i;
-  for(i = recv->begin(); i != recv->end(); ++i) {
-    if (i->is_my_buffer(c)) {
+  std::vector<Cluster*>::const_iterator it;
+  for(it = recv.begin(); it != recv.end(); ++it) {
+    if ((*it)->is_my_buffer(c)) {
       return true;
     }
   }
