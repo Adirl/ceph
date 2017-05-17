@@ -729,9 +729,9 @@ bool Infiniband::MemoryManager::is_rx_buffer(const char* c) {
 
 int Infiniband::MemoryManager::resize_rx_pool(CephContext *cct) {
 
-  Cluster *rx_ext = new Cluster(this, cct->_conf->ms_async_rdma_buffer_size);
+  Cluster *rx_ext = new Cluster(*this, cct->_conf->ms_async_rdma_buffer_size);
   int ext_size = (int)cct->_conf->ms_async_rdma_receive_buffers / 2;
-  recv.push_back(c);
+  recv.push_back(rx_ext);
   rx_ext->alloc_and_reg(ext_size);
 
   //resize srq and post buffers
