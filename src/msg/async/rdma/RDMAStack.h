@@ -160,6 +160,7 @@ enum {
   l_msgr_rdma_tx_bytes,
   l_msgr_rdma_rx_chunks,
   l_msgr_rdma_rx_bytes,
+  l_msgr_rdma_pending_sent_conns,
 
   l_msgr_rdma_last,
 };
@@ -231,6 +232,7 @@ class RDMAConnectedSocketImpl : public ConnectedSocketImpl {
   EventCallbackRef con_handler;
   int tcp_fd = -1;
   bool active;// qp is active ?
+  bool pending;
 
   void notify();
   ssize_t read_buffers(char* buf, size_t len);
@@ -260,7 +262,8 @@ class RDMAConnectedSocketImpl : public ConnectedSocketImpl {
   void cleanup();
   void set_accept_fd(int sd);
   int try_connect(const entity_addr_t&, const SocketOptions &opt);
-
+  bool is_pending() {return pending;}
+  void set_pending(bool val) {pending = val;}
   class C_handle_connection : public EventCallback {
     RDMAConnectedSocketImpl *csi;
     bool active;
