@@ -335,6 +335,7 @@ class Infiniband {
   void init();
 
   void set_dispatcher(RDMADispatcher *d);
+  RDMADispatcher* get_dispatcher() {return dispatcher;}
 
   class CompletionChannel {
     static const uint32_t MAX_ACK_EVENT = 5000;

@@ -543,12 +543,15 @@ RDMAStack::RDMAStack(CephContext *cct, const string &t): NetworkStack(cct, t)
 				  " We recommend setting this parameter to infinity" << dendl;
   }
 
-  if (!global_infiniband)
+  if (!global_infiniband) {
     global_infiniband.construct(
       cct, cct->_conf->ms_async_rdma_device_name, cct->_conf->ms_async_rdma_port_num);
-  ldout(cct, 20) << __func__ << " constructing RDMAStack..." << dendl;
-  dispatcher = new RDMADispatcher(cct, this);
-  global_infiniband->set_dispatcher(dispatcher);
+    ldout(cct, 20) << __func__ << " constructing RDMAStack..." << dendl;
+    dispatcher = new RDMADispatcher(cct, this);
+    global_infiniband->set_dispatcher(dispatcher);
+  } else {
+    dispatcher = global_infiniband->get_dispatcher();
+  }
 
   unsigned num = get_num_worker();
   for (unsigned i = 0; i < num; ++i) {
