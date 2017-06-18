@@ -23,6 +23,7 @@
 
 #include <infiniband/verbs.h>
 
+#include <atomic>
 #include <string>
 #include <vector>
 
@@ -141,6 +142,7 @@ enum {
   l_msgr_rdma_tx_total_wc_errors,
   l_msgr_rdma_tx_wc_retry_errors,
   l_msgr_rdma_tx_wc_wr_flush_errors,
+  l_msgr_rdma_tx_no_registered_mem,
 
   l_msgr_rdma_rx_total_wc,
   l_msgr_rdma_rx_total_wc_errors,
@@ -210,6 +212,7 @@ class Infiniband {
       uint32_t bytes;
       uint32_t bound;
       uint32_t offset;
+      std::atomic_uint shared;
       char* buffer; // TODO: remove buffer/refactor TX
       char  data[0];
     };
@@ -220,7 +223,7 @@ class Infiniband {
       ~Cluster();
 
       int fill(uint32_t num);
-      void take_back(std::vector<Chunk*> &ck);
+      unsigned take_back(std::vector<Chunk*> &ck);
       int get_buffers(std::vector<Chunk*> &chunks, size_t bytes);
       Chunk *get_chunk_by_buffer(const char *c) {
         uint32_t idx = (c - base) / buffer_size;
@@ -278,7 +281,7 @@ class Infiniband {
     void  free(void *ptr);
 
     void create_tx_pool(uint32_t size, uint32_t tx_num);
-    void return_tx(std::vector<Chunk*> &chunks);
+    unsigned return_tx(std::vector<Chunk*> &chunks);
     int get_send_buffers(std::vector<Chunk*> &c, size_t bytes);
     bool is_tx_buffer(const char* c) { return send->is_my_buffer(c); }
     Chunk *get_tx_chunk_by_buffer(const char *c) {

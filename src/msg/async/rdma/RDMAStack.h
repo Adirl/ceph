@@ -209,6 +209,7 @@ class RDMAConnectedSocketImpl : public ConnectedSocketImpl {
   virtual void shutdown() override;
   virtual void close() override;
   virtual int fd() const override { return notify_fd; }
+  virtual void alloc_shared_registered_memory(bufferlist &bl, unsigned len) override;
   void fault();
   const char* get_qp_state() { return Infiniband::qp_state_string(qp->get_state()); }
   ssize_t submit(bool more);

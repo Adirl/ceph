@@ -64,6 +64,7 @@ RDMADispatcher::RDMADispatcher(CephContext* c, RDMAStack* s)
   plb.add_u64_counter(l_msgr_rdma_tx_total_wc_errors, "tx_total_wc_errors", "The number of tx errors");
   plb.add_u64_counter(l_msgr_rdma_tx_wc_retry_errors, "tx_retry_errors", "The number of tx retry errors");
   plb.add_u64_counter(l_msgr_rdma_tx_wc_wr_flush_errors, "tx_wr_flush_errors", "The number of tx work request flush errors");
+  plb.add_u64_counter(l_msgr_rdma_tx_no_registered_mem, "tx_no_registered_mem", "The count of alloc unsatisfied tx registered buffer");
 
   plb.add_u64_counter(l_msgr_rdma_rx_total_wc, "rx_total_wc", "The number of total rx work completion");
   plb.add_u64_counter(l_msgr_rdma_rx_total_wc_errors, "rx_total_wc_errors", "The number of total rx error work completion");
@@ -392,8 +393,7 @@ void RDMADispatcher::post_tx_buffer(std::vector<Chunk*> &chunks)
   if (chunks.empty())
     return ;
 
-  inflight -= chunks.size();
-  global_infiniband->get_memory_manager()->return_tx(chunks);
+  inflight -= global_infiniband->get_memory_manager()->return_tx(chunks);
   ldout(cct, 30) << __func__ << " release " << chunks.size()
                  << " chunks, inflight " << inflight << dendl;
   notify_pending_workers();
