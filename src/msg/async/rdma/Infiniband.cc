@@ -806,7 +806,7 @@ Infiniband::Infiniband(CephContext *cct, const std::string &device_name, uint8_t
 				  " We recommend setting this parameter to infinity" << dendl;
   }
 
-  dispatcher = std::make_shared<RDMADispatcher>(cct);
+  dispatcher = std::make_shared<RDMADispatcher>(cct, this);
   MemoryManager::RxAllocator::set_perf_logger(dispatcher->perf_logger);
 }
 

@@ -43,6 +43,7 @@ class RDMADispatcher {
   Infiniband::CompletionQueue* tx_cq;
   Infiniband::CompletionQueue* rx_cq;
   Infiniband::CompletionChannel *tx_cc, *rx_cc;
+  Infiniband *ib;
   EventCallbackRef async_handler;
   bool done = true;
   std::atomic<uint64_t> num_dead_queue_pair = {0};
@@ -74,7 +75,6 @@ class RDMADispatcher {
   Mutex w_lock; // protect pending workers
   // fixme: lockfree
   std::list<RDMAWorker*> pending_workers;
-
   class C_handle_cq_async : public EventCallback {
     RDMADispatcher *dispatcher;
    public:
@@ -88,10 +88,11 @@ class RDMADispatcher {
  public:
   PerfCounters *perf_logger;
 
-  explicit RDMADispatcher(CephContext* c);
+  explicit RDMADispatcher(CephContext* c, Infiniband* ib);
   virtual ~RDMADispatcher();
   void handle_async_event();
-
+  void set_infiniband(Infiniband *infiniband) { ib = infiniband; }
+  Infiniband *get_infiniband() { return ib; }
   void polling_start();
   void polling_stop();
   void polling();
@@ -256,7 +257,7 @@ class RDMAStack : public NetworkStack {
   vector<std::thread> threads;
   shared_ptr<RDMADispatcher> dispatcher;
   PerfCounters *perf_counter;
-
+  Infiniband *ib;
   std::atomic<bool> fork_finished = {false};
 
  public:
@@ -268,6 +269,8 @@ class RDMAStack : public NetworkStack {
   virtual void spawn_worker(unsigned i, std::function<void ()> &&func) override;
   virtual void join_worker(unsigned i) override;
   RDMADispatcher *get_dispatcher() { return dispatcher.get(); }
+  Infiniband* get_infiniband() { return ib; }
+  void set_infiniband(Infiniband *infiniband) { ib = infiniband; }
 
   virtual bool is_ready() override { return fork_finished.load(); };
   virtual void ready() override { fork_finished = true; };
