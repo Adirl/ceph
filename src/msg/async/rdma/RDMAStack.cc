@@ -511,36 +511,37 @@ void RDMAWorker::handle_pending_message()
   dispatcher->notify_pending_workers();
 }
 
+static void RDMAStack::verify_prereq(CephContext *cct) {
+
+  //On RDMA MUST be called before fork
+   int rc = ibv_fork_init();
+   if (rc) {
+      lderr(cct) << __func__ << " failed to call ibv_for_init(). On RDMA must be called before fork. Application aborts." << dendl;
+      ceph_abort();
+   }
+
+   ldout(cct, 20) << __func__ << " ms_async_rdma_enable_hugepage value is: " << cct->_conf->ms_async_rdma_enable_hugepage <<  dendl;
+   if (cct->_conf->ms_async_rdma_enable_hugepage){
+     rc =  setenv("RDMAV_HUGEPAGES_SAFE","1",1);
+     ldout(cct, 20) << __func__ << " RDMAV_HUGEPAGES_SAFE is set as: " << getenv("RDMAV_HUGEPAGES_SAFE") <<  dendl;
+     if (rc) {
+       lderr(cct) << __func__ << " failed to export RDMA_HUGEPAGES_SAFE. On RDMA must be exported before using huge pages. Application aborts." << dendl;
+       ceph_abort();
+     }
+   }
+
+   //Check ulimit
+   struct rlimit limit;
+   getrlimit(RLIMIT_MEMLOCK, &limit);
+   if (limit.rlim_cur != RLIM_INFINITY || limit.rlim_max != RLIM_INFINITY) {
+      lderr(cct) << __func__ << "!!! WARNING !!! For RDMA to work properly user memlock (ulimit -l) must be big enough to allow large amount of registered memory."
+				  " We recommend setting this parameter to infinity" << dendl;
+   }
+}
+
 RDMAStack::RDMAStack(CephContext *cct, const string &t): NetworkStack(cct, t)
 {
-  //
-  //On RDMA MUST be called before fork
-  //
-
-  int rc = ibv_fork_init();
-  if (rc) {
-     lderr(cct) << __func__ << " failed to call ibv_for_init(). On RDMA must be called before fork. Application aborts." << dendl;
-     ceph_abort();
-  }
-
-  ldout(cct, 20) << __func__ << " ms_async_rdma_enable_hugepage value is: " << cct->_conf->ms_async_rdma_enable_hugepage <<  dendl;
-  if (cct->_conf->ms_async_rdma_enable_hugepage){
-    rc =  setenv("RDMAV_HUGEPAGES_SAFE","1",1);
-    ldout(cct, 20) << __func__ << " RDMAV_HUGEPAGES_SAFE is set as: " << getenv("RDMAV_HUGEPAGES_SAFE") <<  dendl;
-    if (rc) {
-      lderr(cct) << __func__ << " failed to export RDMA_HUGEPAGES_SAFE. On RDMA must be exported before using huge pages. Application aborts." << dendl;
-      ceph_abort();
-    }
-  }
-
-  //Check ulimit
-  struct rlimit limit;
-  getrlimit(RLIMIT_MEMLOCK, &limit);
-  if (limit.rlim_cur != RLIM_INFINITY || limit.rlim_max != RLIM_INFINITY) {
-     lderr(cct) << __func__ << "!!! WARNING !!! For RDMA to work properly user memlock (ulimit -l) must be big enough to allow large amount of registered memory."
-				  " We recommend setting this parameter to infinity" << dendl;
-  }
-
+  verify_prereq(CephContext *cct);
   ib = new Infiniband(cct, cct->_conf->ms_async_rdma_device_name, cct->_conf->ms_async_rdma_port_num);
   ldout(cct, 20) << __func__ << " constructing Infiniband..." << dendl;
   dispatcher = new RDMADispatcher(cct, this);
