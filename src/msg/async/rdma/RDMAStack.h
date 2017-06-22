@@ -256,6 +256,7 @@ class RDMAStack : public NetworkStack {
   RDMADispatcher *dispatcher;
   PerfCounters *perf_counter;
   Infiniband *ib;
+  static bool init;
 
   std::atomic<bool> fork_finished = {false};
 
@@ -274,5 +275,6 @@ class RDMAStack : public NetworkStack {
   virtual bool is_ready() override { return fork_finished.load(); };
   virtual void ready() override { fork_finished = true; };
 };
+
 
 #endif
